@@ -400,7 +400,7 @@ def rotate_y(angle, vec):
     cos_angle = jnp.cos(angle)
     sin_angle = jnp.sin(angle)
     rotation_matrix = jnp.array(
-            [[cos_angle, 0, sin_angle], [0, 1, 0], [-sin_angle, 0, cos_angle]]
+        [[cos_angle, 0, sin_angle], [0, 1, 0], [-sin_angle, 0, cos_angle]]
     )
     rotated_vec = jnp.dot(rotation_matrix, vec)
     return rotated_vec
@@ -424,10 +424,10 @@ def Lmag_2PN(m1, m2, v0):
     Compute the magnitude of the orbital angular momentum
     to 2 post-Newtonian orders.
     """
-    eta = m1 * m2 / (m1 + m2)**2
+    eta = m1 * m2 / (m1 + m2) ** 2
     ## Simplified from:
     ## (m1 + m2) * (m1 + m2) * eta = m1 * m2
-    LN = m1 * m2 / v0
+    LN = (m1 + m2) * (m1 + m2) * eta / v0
     L_2PN = 1.5 + eta / 6.0
     return LN * (1.0 + v0 * v0 * L_2PN)
 
@@ -470,8 +470,8 @@ def spin_angles_to_cartesian_spin(
         Secondary object aligned spin:
     M_c: Float
         The chirp mass
-    eta: Float
-        The symmetric mass ratio
+    q: Float
+        The mass ratio
     fRef: Float
         The reference frequency
     phiRef: Float
@@ -518,7 +518,7 @@ def spin_angles_to_cartesian_spin(
     m1, m2 = Mc_q_to_m1_m2(M_c, q)
     v0 = jnp.cbrt((m1 + m2) * MTSUN * jnp.pi * fRef)
 
-    #Define S1, S2, and J
+    # Define S1, S2, and J
     Lmag = Lmag_2PN(m1, m2, v0)
     s1 = m1 * m1 * chi_1 * s1hat
     s2 = m2 * m2 * chi_2 * s2hat
@@ -571,17 +571,17 @@ def spin_angles_to_cartesian_spin(
 
 
 def cartesian_spin_to_spin_angles(
-        iota: Float,
-        S1x: Float,
-        S1y: Float,
-        S1z: Float,
-        S2x: Float,
-        S2y: Float,
-        S2z: Float,
-        M_c: Float,
-        q: Float,
-        fRef: Float,
-        phiRef: Float,
+    iota: Float,
+    S1x: Float,
+    S1y: Float,
+    S1z: Float,
+    S2x: Float,
+    S2y: Float,
+    S2z: Float,
+    M_c: Float,
+    q: Float,
+    fRef: Float,
+    phiRef: Float,
 ) -> tuple[Float, Float, Float, Float, Float, Float, Float]:
     """
     Transforming the cartesian spin parameters to the spin angles
@@ -665,8 +665,7 @@ def cartesian_spin_to_spin_angles(
 
     # Get angles in the J-N frame
     m1, m2 = Mc_q_to_m1_m2(M_c, q)
-    total_mass = m1 + m2
-    v0 = jnp.cbrt(total_mass * MTSUN * jnp.pi * fRef)
+    v0 = jnp.cbrt((m1 + m2) * MTSUN * jnp.pi * fRef)
 
     # Define S1, S2, J
     S1 = m1 * m1 * s1_vec
@@ -685,11 +684,7 @@ def cartesian_spin_to_spin_angles(
     phi0 = 0.5 * jnp.pi - phiRef
     # Line-of-sight vector in L-frame
     N = jnp.array(
-            [
-                jnp.sin(iota) * jnp.cos(phi0),
-                jnp.sin(iota) * jnp.sin(phi0),
-                jnp.cos(iota)
-            ]
+        [jnp.sin(iota) * jnp.cos(phi0), jnp.sin(iota) * jnp.sin(phi0), jnp.cos(iota)]
     )
 
     # Inclination w.r.t. J

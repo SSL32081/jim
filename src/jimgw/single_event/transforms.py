@@ -7,7 +7,6 @@ from jimgw.single_event.detector import GroundBased2G
 from jimgw.transforms import (
     ConditionalBijectiveTransform,
     BijectiveTransform,
-    NtoNTransform,
     reverse_bijective_transform,
 )
 from jimgw.single_event.utils import (
@@ -28,7 +27,7 @@ from jimgw.single_event.utils import (
 @jaxtyped(typechecker=typechecker)
 class SpinAnglesToCartesianSpinTransform(BijectiveTransform):
     """
-    Spin to Cartesian spin transformation
+    Spin angles to Cartesian spin transformation
     """
 
     freq_ref: Float
@@ -68,20 +67,22 @@ class SpinAnglesToCartesianSpinTransform(BijectiveTransform):
                 "s2_y": s2y,
                 "s2_z": s2z,
             }
-        
+
         def named_inverse_transform(x):
-            theta_jn, phi_jl, tilt_1, tilt_2, phi_12, a_1, a_2 = cartesian_spin_to_spin_angles(
-                x["iota"],
-                x["s1_x"],
-                x["s1_y"],
-                x["s1_z"],
-                x["s2_x"],
-                x["s2_y"],
-                x["s2_z"],
-                x["M_c"],
-                x["q"],
-                self.freq_ref,
-                x["phase_c"],
+            theta_jn, phi_jl, tilt_1, tilt_2, phi_12, a_1, a_2 = (
+                cartesian_spin_to_spin_angles(
+                    x["iota"],
+                    x["s1_x"],
+                    x["s1_y"],
+                    x["s1_z"],
+                    x["s2_x"],
+                    x["s2_y"],
+                    x["s2_z"],
+                    x["M_c"],
+                    x["q"],
+                    self.freq_ref,
+                    x["phase_c"],
+                )
             )
             return {
                 "theta_jn": theta_jn,
@@ -92,7 +93,7 @@ class SpinAnglesToCartesianSpinTransform(BijectiveTransform):
                 "a_1": a_1,
                 "a_2": a_2,
             }
-            
+
         self.transform_func = named_transform
         self.inverse_transform_func = named_inverse_transform
 
