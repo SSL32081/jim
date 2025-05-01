@@ -17,6 +17,7 @@ from jimgw.single_event.waveform import Waveform
 from jimgw.transforms import BijectiveTransform, NtoMTransform
 import logging
 
+import logging
 
 class SingleEventLikelihood(LikelihoodBase):
     detectors: list[Detector]
