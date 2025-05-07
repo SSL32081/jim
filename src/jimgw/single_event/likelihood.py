@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import numpy.typing as npt
-from astropy.time import Time
+from collections import OrderedDict
 from flowMC.strategy.optimization import AdamOptimization
 from jax.scipy.special import logsumexp
 from jaxtyping import Array, Float
@@ -15,7 +15,11 @@ from jimgw.single_event.detector import Detector
 from jimgw.utils import log_i0
 from jimgw.single_event.waveform import Waveform
 from jimgw.transforms import BijectiveTransform, NtoMTransform
+from jimgw.gps_times import greenwich_mean_sidereal_time as jim_gmst
 import logging
+
+HR_TO_RAD = 2 * np.pi / 24
+HR_TO_SEC = 3600
 
 
 class SingleEventLikelihood(LikelihoodBase):
@@ -58,12 +62,10 @@ class TransientLikelihoodFD(SingleEventLikelihood):
         assert np.all(_frequencies, axis=0).all(), "The frequency arrays are not all the same."
         self.detectors = detectors
         self.frequencies = _frequencies[0]
-        self.waveform = waveform
-        self.gmst = (
-            Time(trigger_time, format="gps").sidereal_time("apparent", "greenwich").rad
-        )
-        self.trigger_time = trigger_time
         self.duration = self.detectors[0].data.duration
+        self.waveform = waveform
+        self.trigger_time = trigger_time
+        self.gmst = jim_gmst(trigger_time)
         self.kwargs = kwargs
         if "marginalization" in self.kwargs:
             marginalization = self.kwargs["marginalization"]
@@ -117,7 +119,7 @@ class TransientLikelihoodFD(SingleEventLikelihood):
     def evaluate(self, params: dict[str, Float], data: dict) -> Float:
         # TODO: Test whether we need to pass data in or with class changes is fine.
         """Evaluate the likelihood for a given set of parameters."""
-        params["gmst"] = self.gmst
+        params["gmst"] = self.gmst + params["t_c"] / HR_TO_SEC * HR_TO_RAD
         # adjust the params due to different marginalzation scheme
         params = self.param_func(params)
         # adjust the params due to fixing parameters
@@ -509,7 +511,7 @@ class HeterodynedTransientLikelihoodFD(TransientLikelihoodFD):
             for transform in sample_transforms:
                 guess = jax.vmap(transform.forward)(guess)
             guess = jnp.array(
-                jax.tree.leaves({key: guess[key] for key in parameter_names})
+                jax.tree.leaves(OrderedDict({key: guess[key] for key in parameter_names}))
             ).T
             finite_guess = jnp.where(
                 jnp.all(jax.tree.map(lambda x: jnp.isfinite(x), guess), axis=1)
