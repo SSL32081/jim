@@ -8,17 +8,16 @@ from jaxtyping import Array, Float
 from typing import Optional
 from scipy.interpolate import interp1d
 
-from jimgw.base import LikelihoodBase
-from jimgw.prior import Prior
-from jimgw.single_event.detector import Detector
+from jimgw.constants import HR_TO_RAD, HR_TO_SEC
 from jimgw.utils import log_i0
-from jimgw.single_event.waveform import Waveform
+from jimgw.prior import Prior
+from jimgw.base import LikelihoodBase
 from jimgw.transforms import BijectiveTransform, NtoMTransform
 from jimgw.gps_times import greenwich_mean_sidereal_time as jim_gmst
+from jimgw.single_event.detector import Detector
+from jimgw.single_event.waveform import Waveform
+from jimgw.single_event.utils import inner_product, complex_inner_product
 import logging
-
-HR_TO_RAD = 2 * np.pi / 24
-HR_TO_SEC = 3600
 
 
 class SingleEventLikelihood(LikelihoodBase):
@@ -536,21 +535,6 @@ likelihood_presets = {
 }
 
 
-def inner_product(
-        array_1: Float[Array, " n_dim"],
-        array_2: Float[Array, " n_dim"],
-        psd: Float[Array, " n_dim"],
-        frequencies: Optional[Float[Array, " n_dim"]]=None,
-        df: Optional[Float]=None,
-    ):
-    # Note: move this function to somewhere else, maybe utils,
-    # or even inside Detector.
-    if df is None:
-        df = frequencies[1] - frequencies[0]
-
-    return 4 * jnp.sum((jnp.conj(array_1) * array_2) / psd * df)
-
-
 def original_likelihood(
     params: dict[str, Float],
     h_sky: dict[str, Float[Array, " n_dim"]],
@@ -560,10 +544,10 @@ def original_likelihood(
 ) -> Float:
     log_likelihood = 0.0
     for ifo in detectors:
-        freqs, data, psd = ifo.sliced_frequencies, ifo.fd_data_slice, ifo.psd_slice
+        freqs, data, psd = ifo.sliced_frequencies, ifo.sliced_fd_data, ifo.sliced_psd
         h_dec = ifo.fd_full_response(freqs, h_sky, params, trigger_time)
-        match_filter_SNR = inner_product(h_dec, data, psd, freqs).real
-        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs).real
+        match_filter_SNR = inner_product(h_dec, data, psd, freqs)
+        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs)
         log_likelihood += match_filter_SNR - optimal_SNR / 2
 
     return log_likelihood
@@ -579,10 +563,10 @@ def phase_marginalized_likelihood(
     log_likelihood = 0.0
     complex_d_inner_h = 0.0 + 0.0j
     for ifo in detectors:
-        freqs, data, psd = ifo.sliced_frequencies, ifo.fd_data_slice, ifo.psd_slice
+        freqs, data, psd = ifo.sliced_frequencies, ifo.sliced_fd_data, ifo.sliced_psd
         h_dec = ifo.fd_full_response(freqs, h_sky, params, trigger_time)
-        complex_d_inner_h += inner_product(h_dec, data, psd, freqs)
-        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs).real
+        complex_d_inner_h += complex_inner_product(h_dec, data, psd, freqs)
+        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs)
         log_likelihood += -optimal_SNR / 2
 
     log_likelihood += log_i0(jnp.absolute(complex_d_inner_h))
@@ -618,11 +602,10 @@ def time_marginalized_likelihood(
     log_likelihood = 0.0
     complex_h_inner_d = 0.0 + 0.0j
     for ifo in detectors:
-        freqs, data, psd = ifo.sliced_frequencies, ifo.fd_data_slice, ifo.psd_slice
+        freqs, data, psd = ifo.sliced_frequencies, ifo.sliced_fd_data, ifo.sliced_psd
         h_dec = ifo.fd_full_response(freqs, h_sky, params, trigger_time)
-        # using <h|d> instead of <d|h>
-        complex_h_inner_d += inner_product(data, h_dec, psd, freqs)
-        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs).real
+        complex_h_inner_d += complex_inner_product(data, h_dec, psd, freqs)
+        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs)
         log_likelihood += -optimal_SNR / 2
     duration = detectors[0].data.duration
 
@@ -666,11 +649,10 @@ def phase_time_marginalized_likelihood(
     log_likelihood = 0.0
     complex_h_inner_d = 0.0 + 0.0j
     for ifo in detectors:
-        freqs, data, psd = ifo.sliced_frequencies, ifo.fd_data_slice, ifo.psd_slice
+        freqs, data, psd = ifo.sliced_frequencies, ifo.sliced_fd_data, ifo.sliced_psd
         h_dec = ifo.fd_full_response(freqs, h_sky, params, trigger_time)
-        # using <h|d> instead of <d|h>
-        complex_h_inner_d += inner_product(data, h_dec, psd, freqs)
-        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs).real
+        complex_h_inner_d += complex_inner_product(data, h_dec, psd, freqs)
+        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs)
         log_likelihood += -optimal_SNR / 2
     duration = detectors[0].data.duration
 
