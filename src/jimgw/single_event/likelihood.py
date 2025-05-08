@@ -8,7 +8,7 @@ from jaxtyping import Array, Float
 from typing import Optional
 from scipy.interpolate import interp1d
 
-from jimgw.constants import HR_TO_RAD, HR_TO_SEC
+from jimgw.constants import SEC_TO_RAD
 from jimgw.utils import log_i0
 from jimgw.prior import Prior
 from jimgw.base import LikelihoodBase
@@ -117,7 +117,7 @@ class TransientLikelihoodFD(SingleEventLikelihood):
     def evaluate(self, params: dict[str, Float], data: dict) -> Float:
         # TODO: Test whether we need to pass data in or with class changes is fine.
         """Evaluate the likelihood for a given set of parameters."""
-        params["gmst"] = self.gmst + params["t_c"] / HR_TO_SEC * HR_TO_RAD
+        params["gmst"] = self.gmst + params["t_c"] * SEC_TO_RAD
         # adjust the params due to different marginalzation scheme
         params = self.param_func(params)
         # adjust the params due to fixing parameters
@@ -255,7 +255,7 @@ class HeterodynedTransientLikelihoodFD(TransientLikelihoodFD):
 
         logging.info("Constructing reference waveforms..")
 
-        self.ref_params["gmst"] = self.gmst
+        self.ref_params["gmst"] = self.gmst + self.ref_params["t_c"] * SEC_TO_RAD
         # adjust the params due to different marginalzation scheme
         self.ref_params = self.param_func(self.ref_params)
         # adjust the params due to fixing parameters
@@ -325,7 +325,7 @@ class HeterodynedTransientLikelihoodFD(TransientLikelihoodFD):
     def evaluate(self, params: dict[str, Float], data: dict) -> Float:
         frequencies_low = self.freq_grid_low
         frequencies_center = self.freq_grid_center
-        params["gmst"] = self.gmst
+        params["gmst"] = self.gmst + params["t_c"] * SEC_TO_RAD
         # adjust the params due to different marginalzation scheme
         params = self.param_func(params)
         # adjust the params due to fixing parameters
@@ -359,7 +359,7 @@ class HeterodynedTransientLikelihoodFD(TransientLikelihoodFD):
         """
         Evaluate the likelihood for a given set of parameters.
         """
-        params["gmst"] = self.gmst
+        params["gmst"] = self.gmst + params["t_c"] * SEC_TO_RAD
         # adjust the params due to different marginalzation scheme
         params = self.param_func(params)
         # adjust the params due to fixing parameters
