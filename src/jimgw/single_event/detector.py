@@ -140,8 +140,8 @@ class Detector(ABC):
                 f"The {self.name} data and PSD must have same frequencies"
 
         self._sliced_frequencies = freqs_1
-        self._fd_data_slice = data
-        self._psd_slice = psd
+        self._sliced_fd_data = data
+        self._sliced_psd = psd
 
     def clear_data_and_psd(self) -> None:
         """Clear the data and PSD of the detector."""
@@ -166,22 +166,22 @@ class Detector(ABC):
         return self._sliced_frequencies
 
     @property
-    def fd_data_slice(self) -> Complex[Array, " n_freq"]:
+    def sliced_fd_data(self) -> Complex[Array, " n_freq"]:
         """Get frequency-domain data slice based on frequency bounds.
 
         Returns:
             Complex[Array, " n_sample"]: Sliced frequency-domain data.
         """
-        return self._fd_data_slice
+        return self._sliced_fd_data
 
     @property
-    def psd_slice(self) -> Float[Array, " n_freq"]:
+    def sliced_psd(self) -> Float[Array, " n_freq"]:
         """Get PSD slice based on frequency bounds.
 
         Returns:
             Float[Array, " n_sample"]: Sliced power spectral density.
         """
-        return self._psd_slice
+        return self._sliced_psd
 
 
 class GroundBased2G(Detector):
