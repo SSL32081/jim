@@ -6,6 +6,8 @@ from typing import Optional
 from jimgw.constants import MTSUN
 from jimgw.utils import safe_arctan2, carte_to_spherical_angles
 
+INTEGRATION_SCHEME = "sum" # "sum" or "trapezoid"
+
 
 def complex_inner_product(
     h1: Float[Array, " n_freq"],
@@ -30,7 +32,13 @@ def complex_inner_product(
         Float: Noise-weighted inner product of h1 and h2 with given the PSD.
     """
     integrand = np.conj(h1) * h2 / psd
-    return 4.0 * trapezoid(integrand, x=frequency, dx=df)
+    match INTEGRATION_SCHEME:
+        case "sum":
+            if df is None:
+                df = frequency[1] - frequency[0]
+            return 4.0 * np.sum(integrand) * df
+        case "trapezoid":
+            return 4.0 * trapezoid(integrand, x=frequency, dx=df)
 
 
 def inner_product(
