@@ -1,9 +1,9 @@
+import jax
+import jax.numpy as np
+from copy import deepcopy
+from scipy.signal import welch
 from jimgw.single_event.detector import H1
 from jimgw.single_event.data import Data, PowerSpectrum
-import jax
-import numpy as np
-from copy import deepcopy
-import scipy.signal as sig
 
 class TestDataInterface:
 
@@ -85,21 +85,20 @@ class TestDataInterface:
         assert np.all(self.psd.frequencies <= self.psd_band[1])
 
         # check PSD frequency slice
-        psd_slice, freq_slice = self.psd.frequency_slice(*self.psd_band)
-        assert np.allclose(psd_slice, self.psd.values)
+        sliced_psd, freq_slice = self.psd.frequency_slice(*self.psd_band)
+        assert np.allclose(sliced_psd, self.psd.values)
         assert np.allclose(freq_slice, self.psd.frequencies)
 
         # finally check that we can a Welch PSD from data
         nperseg = self.data.n_time // 2
         psd_auto = self.data.to_psd(nperseg=nperseg)
-        freq_manual, psd_manual = sig.welch(self.data.td, fs=self.f_samp,
+        freq_manual, psd_manual = welch(self.data.td, fs=self.f_samp,
                                             nperseg=nperseg)
         assert np.allclose(psd_auto.frequencies, freq_manual)
         assert np.allclose(psd_auto.values, psd_manual)
 
         # check interpolation of PSD to data frequency grid
-        psd_interp = self.psd.interpolate(self.data.frequencies,
-                                          fill_value=1, bounds_error=False)
+        psd_interp = self.psd.interpolate(self.data.frequencies)
         assert isinstance(psd_interp, PowerSpectrum)
 
         # check drawing frequency domain data from PSD
