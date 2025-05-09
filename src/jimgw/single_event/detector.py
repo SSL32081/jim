@@ -136,13 +136,12 @@ class Detector(ABC):
         data, freqs_1 = self.data.frequency_slice(*self.frequency_bounds)
         psd, freqs_2 = self.psd.frequency_slice(*self.frequency_bounds)
 
-        assert all(
-            freqs_1 == freqs_2
-        ), f"The {self.name} data and PSD must have same frequencies"
+        assert all(freqs_1 == freqs_2), \
+                f"The {self.name} data and PSD must have same frequencies"
 
-        self.sliced_frequencies = freqs_1
-        self.sliced_fd_data = data
-        self.sliced_psd = psd
+        self._sliced_frequencies = freqs_1
+        self._fd_data_slice = data
+        self._psd_slice = psd
 
     def clear_data_and_psd(self) -> None:
         """Clear the data and PSD of the detector."""
@@ -151,12 +150,38 @@ class Detector(ABC):
         self.frequency_bounds = (0.0, float("inf"))
         for attrname in [
             "sliced_frequencies",
-            "frequency_mask",
             "sliced_fd_data",
             "sliced_psd",
         ]:
             if hasattr(self, attrname):
                 delattr(self, attrname)
+
+    @property
+    def sliced_frequencies(self) -> Float[Array, " n_freq"]:
+        """Get frequency-domain data slice based on frequency bounds.
+
+        Returns:
+            Float[Array, " n_sample"]: Sliced frequency-domain data.
+        """
+        return self._sliced_frequencies
+
+    @property
+    def fd_data_slice(self) -> Complex[Array, " n_freq"]:
+        """Get frequency-domain data slice based on frequency bounds.
+
+        Returns:
+            Complex[Array, " n_sample"]: Sliced frequency-domain data.
+        """
+        return self._fd_data_slice
+
+    @property
+    def psd_slice(self) -> Float[Array, " n_freq"]:
+        """Get PSD slice based on frequency bounds.
+
+        Returns:
+            Float[Array, " n_sample"]: Sliced power spectral density.
+        """
+        return self._psd_slice
 
 
 class GroundBased2G(Detector):
