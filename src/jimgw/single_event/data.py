@@ -220,6 +220,7 @@ class Data(ABC):
         """
         if auto_fft:
             self.fft()
+
         mask = (self.frequencies >= f_min) * (self.frequencies <= f_max)
         return self.fd[mask], self.frequencies[mask]
 
