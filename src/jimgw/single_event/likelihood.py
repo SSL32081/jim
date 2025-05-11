@@ -313,9 +313,9 @@ class HeterodynedTransientLikelihoodFD(TransientLikelihoodFD):
                 self.freq_grid_center, h_sky_center, self.ref_params, trigger_time
             )
             A0, A1, B0, B1 = self.compute_coefficients(
-                detector.fd_data_slice,
+                detector.sliced_fd_data,
                 waveform_ref,
-                detector.psd_slice,
+                detector.sliced_psd,
                 frequency_original,
                 freq_grid,
                 self.freq_grid_center,
@@ -548,10 +548,10 @@ def original_likelihood(
 ) -> Float:
     log_likelihood = 0.0
     for ifo in detectors:
-        freqs, data, psd = ifo.sliced_frequencies, ifo.fd_data_slice, ifo.psd_slice
+        freqs, data, psd = ifo.sliced_frequencies, ifo.sliced_fd_data, ifo.sliced_psd
         h_dec = ifo.fd_response(freqs, h_sky, params, trigger_time)
-        match_filter_SNR = inner_product(h_dec, data, psd, freqs).real
-        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs).real
+        match_filter_SNR = inner_product(h_dec, data, psd, freqs)
+        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs)
         log_likelihood += match_filter_SNR - optimal_SNR / 2
 
     return log_likelihood
@@ -567,10 +567,10 @@ def phase_marginalized_likelihood(
     log_likelihood = 0.0
     complex_d_inner_h = 0.0 + 0.0j
     for ifo in detectors:
-        freqs, data, psd = ifo.sliced_frequencies, ifo.fd_data_slice, ifo.psd_slice
+        freqs, data, psd = ifo.sliced_frequencies, ifo.sliced_fd_data, ifo.sliced_psd
         h_dec = ifo.fd_response(freqs, h_sky, params, trigger_time)
-        complex_d_inner_h += inner_product(h_dec, data, psd, freqs)
-        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs).real
+        complex_d_inner_h += complex_inner_product(h_dec, data, psd, freqs)
+        optimal_SNR = inner_product(h_dec, h_dec, psd, freqs)
         log_likelihood += -optimal_SNR / 2
 
     log_likelihood += log_i0(jnp.absolute(complex_d_inner_h))

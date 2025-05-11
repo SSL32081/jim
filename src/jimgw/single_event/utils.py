@@ -29,7 +29,8 @@ def complex_inner_product(
         df (Float): Frequency spacing. If None, it is calculated from the frequency array.
 
     Returns:
-        Float: Noise-weighted inner product of h1 and h2 with given the PSD.
+        Complex: Noise-weighted inner product of h1 and h2 with given the PSD.
+                If either h1, h2 is the strain data, this is the match-filtered SNR.
     """
     integrand = np.conj(h1) * h2 / psd
     match INTEGRATION_SCHEME:

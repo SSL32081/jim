@@ -46,8 +46,8 @@ class Detector(ABC):
     frequency_bounds: tuple[float, float] = (0.0, float("inf"))
 
     _sliced_frequencies: Float[Array, " n_sample"] = jnp.array([])
-    _fd_data_slice: Float[Array, " n_sample"] = jnp.array([])
-    _psd_slice: Float[Array, " n_sample"] = jnp.array([])
+    _sliced_fd_data: Float[Array, " n_sample"] = jnp.array([])
+    _sliced_psd: Float[Array, " n_sample"] = jnp.array([])
 
     @property
     def epoch(self) -> Float:
@@ -601,9 +601,7 @@ class GroundBased2G(Detector):
 
         # 2. Compute the projected strain from parameters
         polarisations = waveform_model(self.frequencies, parameters)
-        projected_strain = self.fd_full_response(
-            self.frequencies, polarisations, parameters
-        )
+        projected_strain = self.fd_response(self.frequencies, polarisations, parameters)
 
         # 3. Set the new data
         strain_data = jnp.where(self.frequency_mask, projected_strain, 0.0 + 0.0j)
