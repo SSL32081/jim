@@ -3,6 +3,7 @@ from typing import Callable
 
 import jax
 import jax.numpy as jnp
+from jax.scipy.special import logit
 from beartype import beartype as typechecker
 from jaxtyping import Float, Array, jaxtyped
 
@@ -299,9 +300,7 @@ class LogitTransform(BijectiveTransform):
             for i in range(len(name_mapping[0]))
         }
         self.inverse_transform_func = lambda x: {
-            name_mapping[0][i]: jnp.log(
-                x[name_mapping[1][i]] / (1 - x[name_mapping[1][i]])
-            )
+            name_mapping[0][i]: logit(x[name_mapping[1][i]])
             for i in range(len(name_mapping[1]))
         }
 
@@ -420,9 +419,6 @@ class BoundToUnbound(BijectiveTransform):
         original_lower_bound: Float,
         original_upper_bound: Float,
     ):
-
-        def logit(x):
-            return jnp.log(x / (1 - x))
 
         super().__init__(name_mapping)
         self.original_lower_bound = jnp.atleast_1d(original_lower_bound)
