@@ -141,7 +141,6 @@ class SphereSpinToCartesianSpinTransform(BijectiveTransform):
             mag = np.sqrt(x**2 + y**2 + z**2)
             theta, phi = carte_to_spherical_angles(x, y, z)
             phi = np.mod(phi, 2.0 * np.pi)
-
             return {
                 label + "_mag": mag,
                 label + "_theta": theta,
