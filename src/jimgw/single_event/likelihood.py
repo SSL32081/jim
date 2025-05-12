@@ -59,7 +59,6 @@ class TransientLikelihoodFD(SingleEventLikelihood):
         assert jax.tree.reduce(
             jnp.array_equal, _frequencies
         ), "The frequency arrays are not all the same."
-
         self.detectors = detectors
         self.frequencies = _frequencies[0]
         self.duration = self.detectors[0].data.duration

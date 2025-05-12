@@ -25,11 +25,6 @@ from jimgw.single_event.utils import (
 )
 from jimgw.gps_times import greenwich_mean_sidereal_time as compute_gmst
 
-# Move these to constants.
-HR_TO_RAD = 2 * np.pi / 24
-HR_TO_SEC = 3600
-SEC_TO_RAD = HR_TO_RAD / HR_TO_SEC
-
 
 @jaxtyped(typechecker=typechecker)
 class SpinAnglesToCartesianSpinTransform(ConditionalBijectiveTransform):
@@ -254,7 +249,6 @@ class GeocentricArrivalTimeToDetectorArrivalTimeTransform(
 
             y = (t_det - t_det_min) / (t_det_max - t_det_min)
             t_det_unbounded = logit(y)
-
             return {
                 "t_det_unbounded": t_det_unbounded,
             }
