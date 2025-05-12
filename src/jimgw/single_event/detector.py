@@ -385,26 +385,15 @@ class GroundBased2G(Detector):
         time_shift += params["geocent_time"] - self.epoch
 
         h_detector = jax.tree_util.tree_map(
-<<<<<<< HEAD
             lambda h, antenna: h * antenna,
-=======
-            lambda h, antenna: h
-            * antenna
-            * np.exp(-2j * np.pi * frequency * timeshift),
->>>>>>> add-inject-signal
             h_sky,
             antenna_pattern,
         )
         projected_strain = np.sum(
             np.stack(jax.tree_util.tree_leaves(h_detector)), axis=0
         )
-<<<<<<< HEAD
 
-        phase_shift = jnp.exp(-2j * jnp.pi * frequency * time_shift)
-=======
-        trigger_time_shift = trigger_time - self.epoch + params["t_c"]
-        phase_shift = np.exp(-2j * np.pi * frequency * trigger_time_shift)
->>>>>>> add-inject-signal
+        phase_shift = np.exp(-2j * np.pi * frequency * time_shift)
         return projected_strain * phase_shift
 
     def td_response(
